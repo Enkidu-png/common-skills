@@ -5,31 +5,29 @@ description: Drive a spec-first workflow for substantial features by writing PRO
 
 # spec-driven-implementation
 
-Drive a spec-first workflow for substantial features in Warp.
+Drive a spec-first workflow for substantial features in bazarty.
 
 ## Overview
 
 Use this skill for significant features where a written spec will improve implementation quality, reduce ambiguity, or make review easier. Be pragmatic: not every change needs specs.
 
-Specs should usually live in:
+Specs should usually live in (the repo's `specs/README.md` is the source of truth):
 
-- `specs/<linear-ticket-number>/PRODUCT.md`
-- `specs/<linear-ticket-number>/TECH.md`
+- `specs/GH<n>/product.md`
+- `specs/GH<n>/tech.md`
 
-For example:
+where `<n>` is the GitHub issue number in `Enkidu-png/bazarty-platforma`. For example:
 
-- `specs/APP-1234/PRODUCT.md`
-- `specs/APP-1234/TECH.md`
+- `specs/GH1234/product.md`
+- `specs/GH1234/tech.md`
 
-`specs/` should contain only ticket-named directories as direct children. Do not create engineer-named subdirectories or feature-slug directories there.
+Keep this exact spelling (`GH` uppercase, file names lowercase): `review-pr` finds spec context only by the pattern `specs/GH<n>/(product|tech).md`. Large, long-lived areas (payments, shipping, chat, catalog, ...) keep their specs in `specs/<obszar>/PRODUCT.md`, `tech.md` and `DECISIONS.md` instead.
 
-If a relevant Linear issue does not already exist, create one before writing specs. Use the Linear MCP tools directly:
+`specs/` should contain only `GH<n>` or area-named directories as direct children. Do not create engineer-named subdirectories or feature-slug directories there.
 
-- `list_teams` to find the appropriate team
-- `list_issue_labels` to inspect the expected labels/tags
-- `save_issue` to create the issue with the appropriate team and labels
+If a relevant GitHub issue does not already exist, create one before writing specs with the `gh` CLI (`gh issue create --repo Enkidu-png/bazarty-platforma`), with labels from `.github/issue-triage/config.json`. Never use Linear: it is not this project's tracker.
 
-If the correct team or labels are not obvious from the request and surrounding context, use `ask_user_question` to clarify rather than guessing.
+If the correct labels are not obvious from the request and surrounding context, use `ask_user_question` to clarify rather than guessing.
 
 These specs should largely be written by agents, not by hand, and should be checked into source control so they can be reviewed and kept current with the code.
 
@@ -59,7 +57,7 @@ Evaluate the size, ambiguity, and risk of the feature. If specs will not meaning
 
 ### 2. Write the product spec first
 
-Before implementation, create `PRODUCT.md` describing the desired user-facing behavior.
+Before implementation, create `product.md` describing the desired user-facing behavior.
 
 Use the `write-product-spec` skill to produce it. The product spec should define:
 
@@ -69,9 +67,9 @@ Use the `write-product-spec` skill to produce it. The product spec should define
 - success criteria
 - how the behavior will be validated
 
-If the feature has UI or interaction design, ask for a Figma mock if one exists. If there is no mock, continue but call that out explicitly in the product spec.
+If the feature has UI or interaction design, ask for a mock (Figma, an HTML mock file or a screenshot in the repo) if one exists. If there is no mock, continue but call that out explicitly in the product spec.
 
-Reference the Linear issue in the spec when one exists. Because specs live under `specs/<linear-ticket-number>/...`, this should usually be straightforward.
+Reference the GitHub issue in the spec (`Issue: #<n>`). Because specs live under `specs/GH<n>/...`, this should usually be straightforward.
 
 ### 3. Write the tech spec when warranted
 
@@ -88,9 +86,9 @@ It is acceptable to write the tech spec after an e2e prototype if that leads to 
 
 ### 4. Implement approved specs
 
-After the specs are approved, use the `implement-specs` skill to build from the approved `PRODUCT.md` and `TECH.md`.
+After the specs are approved (the issue gets `ready-to-implement`), use the `implement-specs` skill to build from the approved `product.md` and `tech.md`.
 
-The implementation can often be pushed in the same PR as the product and tech specs. As the engineer iterates, keep `PRODUCT.md`, `TECH.md`, code changes, and tests in that same PR so the review reflects the feature that will actually ship.
+The implementation can often be pushed in the same PR as the product and tech specs. As the engineer iterates, keep `product.md`, `tech.md`, code changes, and tests in that same PR so the review reflects the feature that will actually ship.
 
 For large features, the implementer may optionally offer:
 
@@ -103,13 +101,13 @@ These are optional aids, not required outputs.
 
 If implementation changes from the spec, update the spec rather than leaving it stale.
 
-Update `PRODUCT.md` when:
+Update `product.md` when:
 
 - user-facing behavior changes
 - success criteria change
 - UX details or edge cases change
 
-Update `TECH.md` when:
+Update `tech.md` when:
 
 - the implementation approach changes
 - architectural boundaries move

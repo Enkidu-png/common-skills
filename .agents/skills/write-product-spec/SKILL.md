@@ -1,40 +1,39 @@
 ---
 name: write-product-spec
-description: Write a PRODUCT.md spec for a significant user-facing feature in Warp, focused on detailed behavior and validation. Use when the user asks for a product spec, desired behavior doc, or PRD, wants to define feature behavior before implementation, or when the feature is substantial or behaviorally ambiguous enough that a written spec would improve implementation or review.
+description: Write a product spec (`specs/GH<n>/product.md`) for a significant user-facing feature in bazarty, focused on detailed behavior and validation. Use when the user asks for a product spec, desired behavior doc, or PRD, wants to define feature behavior before implementation, or when the feature is substantial or behaviorally ambiguous enough that a written spec would improve implementation or review.
 ---
 
 # write-product-spec
 
-Write a `PRODUCT.md` spec for a significant feature in Warp.
+Write a product spec for a significant feature in bazarty.
 
 ## Overview
 
 The product spec should make the desired behavior unambiguous enough that an agent can implement it correctly and avoid regressions. Describe the feature purely from the user's perspective — what the user sees, does, and experiences, and the invariants that must hold for them. Do not include implementation details (internal types, state layout, module boundaries, data flow, algorithms).
 
-"User" is not limited to the end user of the Warp app. It means whoever consumes the surface being designed:
+"User" is not limited to the end user of the bazarty app. It means whoever consumes the surface being designed:
 
-- For UI / UX features: the human using Warp.
+- For UI / UX features: the human using bazarty (buyer, creator or admin).
 - For a data model: the code that reads and writes that model.
 - For an API, protocol, or library: the callers of that API — other services, client code, plugins, or agents.
 - For a CLI tool or developer-facing surface: the developer invoking it.
 
 The spec should describe behavior from that consumer's perspective: the shape of the surface, the operations they can perform, what they see back, invariants they can rely on, and edge cases they must handle — without prescribing how the surface is implemented underneath.
 
-Implementation details, validation, and test planning live in a companion `TECH.md`, produced by the `write-tech-spec` skill. Writing the product spec is usually the first step of a two-step process: once `PRODUCT.md` is agreed on, invoke `write-tech-spec` to produce `TECH.md` for the same feature (or let the user know that's the expected next step). The product spec should be written so the tech spec can be written directly from it.
+Implementation details, validation, and test planning live in a companion `tech.md`, produced by the `write-tech-spec` skill. Writing the product spec is usually the first step of a two-step process: once `PRODUCT.md` is agreed on, invoke `write-tech-spec` to produce `TECH.md` for the same feature (or let the user know that's the expected next step). The product spec should be written so the tech spec can be written directly from it.
 
-Write specs to `specs/<id>/PRODUCT.md`, where `<id>` is one of:
+Write specs to one of two places (the repo's `specs/README.md` is the source of truth for both):
 
-- a Linear ticket number (e.g. `specs/APP-1234/PRODUCT.md`)
-- a GitHub issue id, prefixed with `gh-` (e.g. `specs/gh-4567/PRODUCT.md`)
-- a short kebab-case feature name (e.g. `specs/vertical-tabs-hover-sidecar/PRODUCT.md`)
+- a new feature tied to a GitHub issue: `specs/GH<n>/product.md` (e.g. `specs/GH4567/product.md`). Keep this exact spelling: `review-pr` finds spec context only by the pattern `specs/GH<n>/(product|tech).md`.
+- a large, long-lived area (payments, shipping, chat, catalog, profile, ...): `specs/<obszar>/PRODUCT.md`.
 
-`specs/` should contain only id-named directories as direct children — no engineer-named subdirectories.
+`specs/` should contain only `GH<n>` or area-named directories as direct children — no engineer-named subdirectories, no feature-slug directories.
 
-Ticket / issue references are optional. If the user has a Linear ticket or GitHub issue, use its id. If they don't, ask them for a feature name to use as the directory. Only create a new Linear ticket or GitHub issue when the user explicitly asks for one; in that case use the Linear MCP tools or `gh` CLI respectively (and `ask_user_question` if team, labels, or repo are unclear).
+The tracker is GitHub Issues in `Enkidu-png/bazarty-platforma`; never use Linear. If the user has no issue, ask whether to create one; only create it when the user explicitly asks, with `gh issue create --repo Enkidu-png/bazarty-platforma` (and `ask_user_question` if labels are unclear).
 
 ## Before writing
 
-Gather only the context you need: directory id (Linear ticket, GitHub issue, or feature name), feature summary, target users, key behaviors, edge cases, and how the feature will be validated. Use `ask_user_question` for missing context rather than guessing.
+Gather only the context you need: directory (GitHub issue number or area name), feature summary, target users, key behaviors, edge cases, and how the feature will be validated. Use `ask_user_question` for missing context rather than guessing.
 
 ### Figma mocks
 

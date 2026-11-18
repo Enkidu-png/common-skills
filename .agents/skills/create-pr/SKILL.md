@@ -20,7 +20,7 @@ This guide covers best practices for creating pull requests in the bazarty repos
 
 ### 1. Merge the base branch into your feature branch
 
-**Always merge the base branch into your feature branch before starting the review process.** The base branch is `main`, except for work on the agent-system transition, which targets `warp/przejscie`. Never push to `main` and never merge into it: that is the owner's decision (merge to `main` deploys production).
+**Always merge the base branch into your feature branch before starting the review process.** The base branch is `dev` (the default branch: integration, the friends' test site, the DEV database). Work on the agent-system transition targets `warp/przejscie`. `main` is production: a PR goes to `main` only as a release (`dev` to `main`) or an urgent fix, both by the procedure in `.ai/docs/RUNBOOK-WYDANIE.md` and only after the owner agrees. Never push to `main` or `dev` directly.
 
 ```bash
 git fetch origin
@@ -71,7 +71,7 @@ PRs should be associated with a GitHub issue in `Enkidu-png/bazarty-platforma` (
 Use a short descriptive branch name with a type prefix (e.g., `fix/koszyk-suma`, `feat/oferta-ceny`); agent-system transition work uses `warp/<slug>`.
 
 **How to link PRs to issues:**
-Put the issue number in the PR title (e.g., `Poprawka sumy koszyka (#1234)`) and a closing keyword in the body (`Fixes #1234`) so the issue closes on merge.
+Put the issue number in the PR title (e.g., `Poprawka sumy koszyka (#1234)`) and a closing keyword in the body (`Fixes #1234`). GitHub closes the issue only when the PR merges into the default branch (`dev`); for a PR into `warp/**` the orchestrator closes the issue explicitly. Add `Refs #1234` when the PR only touches the issue: the `szybkie` fast path counts one PR per issue by this reference.
 
 **Scope trailer:**
 The first commit of the task carries `Scope-Files: <glob>[, <glob>...]` in its message body. Without it the diff-scope guard (`npm run check:zakres`) checks nothing.
@@ -96,13 +96,13 @@ Add changelog entries when appropriate using the format at the bottom of the PR 
 - **Create a new PR:**
   ```bash
   # With title and body
-  gh pr create --base <base-branch> --title "Title" --body "Description" --draft
+  gh pr create --base dev --title "Title" --body "Description" --draft
 
   # Auto-fill from commits
-  gh pr create --fill --draft
+  gh pr create --base dev --fill --draft
 
   # Use PR template file
-  gh pr create --body-file .github/pull_request_template.md --title "Title" --draft
+  gh pr create --base dev --body-file .github/pull_request_template.md --title "Title" --draft
   ```
   Key flags: `--draft` / `-d`, `--fill` / `-f`, `--body-file` / `-F`, `--web` / `-w`
 
