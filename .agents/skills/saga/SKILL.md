@@ -19,7 +19,7 @@ The whole method rests on one bet: if the spec defines every task with validatio
 
 ## The saga directory
 
-Each saga lives in its own directory **outside the repo**, under `~/.sagas/`, so it survives across orchestrator sessions and can be resumed by a fresh agent. Name it uniquely from a slug of the feature plus a timestamp, e.g. `~/.sagas/dark-mode-20260609-0028/`. Confirm the exact path with the user and record it — it is the saga's stable identity.
+Each saga lives in its own directory **outside the repo**, under `~/.sagas/`, so it survives across orchestrator sessions and can be resumed by a fresh agent. Name it uniquely from a slug of the feature plus a timestamp, e.g. `~/.sagas/dark-mode-20260609-0028/`. Confirm the exact path with the user and record it - it is the saga's stable identity. When this session also holds the `orkiestrator-warp:orkiestrator` role, write the saga path into the plugin's state file as well, so a resume after compaction finds the saga; before compaction, save a handoff with `orkiestrator-warp:handoff`.
 
 The directory holds a *tree* of spec files plus a progress log. Each level carries its own validation criteria, so detail scales with the size of the saga instead of bloating one file:
 
@@ -48,7 +48,7 @@ Use the templates and field definitions in `references/saga-spec-template.md` ve
 
 Goal: produce a comprehensive, unambiguous saga spec tree. This phase is **fully collaborative** with the user. It ends only when the user approves the spec.
 
-When asking the user anything in this phase, **always use the `ask_user_question` tool and provide concrete options** (single- or multi-select) rather than open-ended questions. Set a `recommended_option_index` when there is a sensible default. Open-ended prose questions slow the user down and invite vague answers; options force crisp decisions.
+When asking the user anything in this phase, **always use the `AskUserQuestion` tool and provide concrete options** (single- or multi-select) rather than open-ended questions. When there is a sensible default, put it first and add "(Recommended)" to its label. Open-ended prose questions slow the user down and invite vague answers; options force crisp decisions.
 
 ### 1. Intake and frame
 
@@ -59,7 +59,7 @@ Restate the request as a one-paragraph problem statement and the rough shape of 
 You cannot define realistic validation criteria without knowing what can actually be tested on this machine and against this program. Determine, by inspecting the repo and environment first and asking the user only for what you cannot discover:
 
 - **What kind of program is this?** Web app, native GUI, TUI, CLI/library, backend service, etc. This dictates the validation method (see `references/validation-strategies.md`).
-- **Is computer use available?** Check whether a computer-use / browser-automation capability is available to you or to cloud workers. If GUI/web validation is needed but computer use is only available remotely, plan to route that validation through remote workers.
+- **Is browser automation available?** Check whether Playwright (`npx playwright`, the repo's `npm run test:e2e*` scripts) or a browser MCP is available locally. Workers run locally, so GUI/web validation must be planned with the local tools; if none works, say so and fall back to the user's manual check in Phase 3.
 - **What is the test/build toolchain?** Discover the test runner, build, lint, and typecheck commands (e.g. from README, CI config, package manifests, project rules). Confirm they run.
 - **How is the program run/launched** for manual or interactive verification?
 
@@ -67,7 +67,7 @@ Record these findings in `SAGA.md` under the environment section — workers and
 
 ### 3. Close every gap of ambiguity
 
-Iterate with the user, via `ask_user_question` with options, until there is no whitespace left in the requirements: behavior, scope boundaries, edge cases, data shapes, error handling, non-goals, and acceptance bar. Batch related questions (max 4 per call). Stop only when the remaining decisions are either resolved or explicitly delegated to your discretion by the user.
+Iterate with the user, via `AskUserQuestion` with options, until there is no whitespace left in the requirements: behavior, scope boundaries, edge cases, data shapes, error handling, non-goals, and acceptance bar. Batch related questions (max 4 per call). Stop only when the remaining decisions are either resolved or explicitly delegated to your discretion by the user.
 
 ### 4. Define the saga exit criteria
 
@@ -81,7 +81,7 @@ Write this out as the spec tree in the saga directory: the milestone index and s
 
 ### 6. Get approval
 
-Present the saga spec — walk the user through `SAGA.md` and the milestone/task specs — and ask them to approve or request changes (via `ask_user_question`). **Do not begin Phase 2 until the user approves.** This is the primary human checkpoint.
+Present the saga spec - walk the user through `SAGA.md` and the milestone/task specs - and ask them to approve or request changes (via `AskUserQuestion`). **Do not begin Phase 2 until the user approves.** This is the primary human checkpoint.
 
 ---
 
@@ -91,28 +91,29 @@ Goal: execute every task to its validation criteria, milestone by milestone, del
 
 ### Orchestration mechanics
 
-- **Delegate, don't implement.** Use `run_agents` to launch workers. You coordinate; you do not write feature code yourself. This is what protects your context.
-- **Batch by parallelism.** Within a milestone, launch all independent tasks as one `run_agents` batch (shared `base_prompt`, per-task `prompt`). Run dependent milestones in sequence. Use a Mermaid/DAG mental model from the task dependencies.
+- **Delegate, don't implement.** Use the `Agent` tool to launch workers (one call per worker, in the background). You coordinate; you do not write feature code yourself. This is what protects your context.
+- **Batch by parallelism.** Within a milestone, launch all independent tasks in one message with one `Agent` call per task, so they run in parallel; each prompt carries the shared rules plus its own task. Run dependent milestones in sequence. Use a Mermaid/DAG mental model from the task dependencies.
 - **Isolate local workers.** When workers modify the same repo, give each its own git worktree and branch. Follow the **saga branch naming convention** so every branch is traceable back to its saga directory, milestone, and task without consulting `PROGRESS.md`:
   ```
   saga/<saga-name>/m<M>t<T>-<task-slug>
   ```
   Example: `saga/dark-mode-20260609-0028/m1t2-setup-tokens`. Create with:
   ```
-  git worktree add ../saga-<saga-name>-m<M>t<T> -b saga/<saga-name>/m<M>t<T>-<task-slug> <base>
+  git worktree add /Users/slajs/orca/workspaces/bazarty-platforma/.warp-wt/saga-<saga-name>-m<M>t<T> -b saga/<saga-name>/m<M>t<T>-<task-slug> <base>
   ```
+  Alternatively pass `isolation: "worktree"` on the `Agent` call; the worker then creates the branch above inside its own worktree.
   If your team or repo has a branch-prefix convention (e.g. a per-user prefix like `<username>/`, or a required prefix enforced by CI), prepend it consistently while keeping the `saga/<saga-name>/...` structure intact so branches stay filterable. Workers must never share a checkout or work on the user's current branch. Decide the merge strategy up front (typically: integrate each milestone's branches at the milestone boundary). Worker changes must be committed, pushed, or otherwise durably handed off before any worktree is removed.
   
   To list all branches for a saga: `git branch --list '*saga/<saga-name>/*'`
-- **Remote workers for computer use.** If a task's validation needs computer use and it is only available remotely, launch that worker (or its validation step) remotely with computer use enabled, and have it return a durable artifact (pushed branch, draft PR, or a compact patch/diff) rather than leaving work only in the remote environment.
+- **Browser validation runs locally.** There are no remote workers here. A task whose validation needs a browser uses Playwright in its own worktree and returns screenshots or the test report as evidence.
 
 ### The per-task contract given to each worker
 
-Put shared rules in `base_prompt` (repo path, base branch, toolchain commands, coding standards, the validation method, how to report back) and the specific task in each per-worker `prompt`. Instruct every worker to:
+Open every worker prompt with the same shared block (repo path, base branch, toolchain commands such as the repo's `npm run check:*` and `npm run bramka`, coding standards from `AGENTS.md`, the validation method, how to report back) and follow it with the specific task. Instruct every worker to:
 
 1. Implement only its assigned task and owned files.
 2. **Self-validate in a loop** against the task's validation criteria using the prescribed method (computer use / interactive CLI subagent / unit + integration tests). Iterate fix→validate until all criteria pass or it is genuinely blocked.
-3. **Create a durable handoff before cleanup.** For local git worktree tasks, commit the validated changes to the task branch and make sure the branch is visible to the orchestrator. For remote tasks, push the branch, open a draft PR, or return a complete patch/diff; do not leave the only copy of the work in a remote checkout. If blocked with partial useful work, preserve it as a WIP commit or patch before reporting; if no partial work is worth preserving, say so explicitly.
+3. **Create a durable handoff before cleanup.** For local git worktree tasks, commit the validated changes to the task branch and make sure the branch is visible to the orchestrator. If the branch must reach someone else, push it or open a draft PR; do not leave the only copy of the work in a worktree that is about to be removed. If blocked with partial useful work, preserve it as a WIP commit or patch before reporting; if no partial work is worth preserving, say so explicitly.
 4. **Remove the worktree only after the durable handoff exists**: `git worktree remove <worktree-path> --force`. The branch or patch persists; the worktree does not. Stale worktrees are unacceptable, but cleanup must never be allowed to discard the only copy of validated or useful partial work.
 5. Report back compactly: branch name, commit hash or patch/pushed-branch artifact, changed files, the validation evidence (test output, screenshots, CLI transcript), and a clear pass/blocked status. Keep findings terse — you are protecting context.
 
@@ -122,9 +123,9 @@ See `references/validation-strategies.md` for choosing and applying the validati
 
 For each milestone, in order:
 
-1. Launch the milestone's parallelizable tasks as worker(s). Immediately record each worker's addressable agent/run ID in `PROGRESS.md` alongside its task, branch, and worktree. Display names are not sufficient for resume; a fresh orchestrator needs the run ID to message an in-progress worker.
+1. Launch the milestone's parallelizable tasks as worker(s). Immediately record each worker's agent ID (returned by the `Agent` tool) in `PROGRESS.md` alongside its task, branch, and worktree. Display names are not sufficient for resume; a fresh orchestrator needs the agent ID to message an in-progress worker with `SendMessage`.
 2. Collect reports as they arrive (read the worker's message content; don't rely on lifecycle success alone). Update `PROGRESS.md` in the saga directory with per-task status and evidence pointers.
-3. **Handle blocked tasks.** If a worker can't meet its criteria, decide: re-scope and re-delegate to the same worker (it retains context), adjust the task in its task spec file, or — only if the blocker is a genuine spec gap or external decision — escalate to the user with options. Prefer not to escalate; the spec should usually have the answer.
+3. **Handle blocked tasks.** If a worker can't meet its criteria, decide: re-scope and re-delegate to the same worker with `SendMessage` (it retains context), adjust the task in its task spec file, or - only if the blocker is a genuine spec gap or external decision - escalate to the user with options. Prefer not to escalate; the spec should usually have the answer.
 4. **Integrate and run milestone-level validation.** Merge the milestone's branches into the integration branch, resolve conflicts, and verify the milestone holds together (run the relevant tests/validation across the integrated result). If any worker left a worktree behind despite instructions, remove it now (`git worktree remove <path> --force`) before proceeding.
 5. Move to the next milestone.
 
@@ -138,7 +139,7 @@ Goal: confirm the saga's exit criteria are met, then hand off to the user for ma
 
 1. Run the full saga-level exit criteria using the strongest available method (computer use for GUI/web, interactive CLI for TUIs, the full test/integration suite otherwise). Summarize the evidence against each exit criterion.
 2. Present the user a concise completion report: what was built, how each exit criterion was validated, and exact steps for them to manually verify (how to run/launch, what to look for).
-3. **Loop in the user for manual acceptance** via `ask_user_question`: accept, or report specific issues. If they report issues, capture them as new tasks, run a focused Phase 2 mini-loop (delegate → self-validate → integrate), and re-present. Repeat until the user accepts.
+3. **Loop in the user for manual acceptance** via `AskUserQuestion`: accept, or report specific issues. If they report issues, capture them as new tasks, run a focused Phase 2 mini-loop (delegate → self-validate → integrate), and re-present. Repeat until the user accepts.
 
 Only consider the saga complete when the user confirms acceptance.
 
@@ -152,7 +153,7 @@ Because the saga directory and `PROGRESS.md` live outside the repo and capture f
 
 - Never commit or open PRs unless the user asks; follow the repo's version-control rules when you do.
 - Keep the spec tree current — if implementation forces a change to scope or criteria, update the relevant spec file rather than letting it drift.
-- For very large sagas (≈10+ concurrent workers), prefer remote execution so you don't exhaust the user's machine.
+- For very large sagas (around 10+ concurrent workers), cap parallelism and run the milestone in waves so you don't exhaust the user's machine.
 - Don't expose internal worker agent IDs in user-facing summaries unless asked.
 
 ## Reference files

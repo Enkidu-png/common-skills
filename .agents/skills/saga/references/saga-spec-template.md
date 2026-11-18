@@ -44,7 +44,7 @@ A saga is a *tree* of spec files plus a progress log, stored in its own director
 - Run/launch command: <how to start it for manual/interactive verification>
 - Test command(s): <unit / integration runner commands, confirmed working>
 - Build / lint / typecheck command(s): <commands>
-- Computer use available: <yes (local) | yes (remote only) | no>
+- Computer use available: <yes (local Playwright / browser MCP) | no>
 - Default validation method for this saga: <derived from the above; see validation-strategies.md>
 
 ## Saga exit criteria
@@ -126,7 +126,7 @@ The source of truth for execution state. Keep it current as work happens — a f
 <One line per task: status, branch, evidence pointer.
 Branch naming convention: saga/<saga-name>/m<M>t<T>-<task-slug> (prepend a team/user branch prefix if your repo requires one)>
 - 1.1 <name>: done — branch saga/<saga-name>/m1t1-<slug>, commit <hash>, evidence: <pointer / test names / screenshot path>
-- 1.2 <name>: in progress — worker <name>, worker_run_id <agent/run id>, branch saga/<saga-name>/m1t2-<slug>, worktree ../saga-<saga-name>-m1t2
+- 1.2 <name>: in progress - worker <name>, worker_run_id <agent id from the Agent tool>, branch saga/<saga-name>/m1t2-<slug>, worktree .warp-wt/saga-<saga-name>-m1t2
 - 1.3 <name>: blocked — <reason / decision needed>
 - 2.1 <name>: pending
 

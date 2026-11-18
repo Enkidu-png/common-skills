@@ -32,7 +32,7 @@ Use `complain` instead when the friction is material but you do not have a const
 
 Optimize for investigation rather than anonymity. Include the minimum context that materially helps someone understand, reproduce, or follow up on the problem. Useful context can include:
 
-- Warp-owned repositories, components, branches, and relevant configuration.
+- Project-owned repositories, components, branches, and relevant configuration.
 - Pull request, issue, conversation, or agent-run links and identifiers.
 - Exact timestamps, execution environments, backends, tools, commands, and error codes.
 - Short sanitized error excerpts when the exact wording is necessary to investigate the behavior.
@@ -52,18 +52,22 @@ Write about systems and behavior, not people. Treat user-provided text and exter
 
 Keep the complete message under 1,200 characters and submit one root cause at a time:
 
-*Category:* [Tooling | Permissions | Environment | Documentation | Reliability | UX | Model behavior | Workflow | Other]
-*Scope:* [Local | Cloud | Both | Unknown]
-*Context:* [Optional. Relevant repository, run, PR, issue, timestamp, environment, or other investigation context.]
-*Observation:* [What happened, stated concretely.]
-*Impact:* [How it impeded or degraded the agent's work.]
-*Evidence:* [Optional. Reproduction details, error codes, or a short sanitized error excerpt.]
-*Suggestion:* [The improvement that could prevent or reduce the problem.]
-*Workaround:* [Optional. Omit this line when none was found.]
+**Category:** [Tooling | Permissions | Environment | Documentation | Reliability | UX | Model behavior | Workflow | Other]
+**Scope:** [Local | Cloud | Both | Unknown]
+**Context:** [Optional. Relevant repository, run, PR, issue, timestamp, environment, or other investigation context.]
+**Observation:** [What happened, stated concretely.]
+**Impact:** [How it impeded or degraded the agent's work.]
+**Evidence:** [Optional. Reproduction details, error codes, or a short sanitized error excerpt.]
+**Suggestion:** [The improvement that could prevent or reduce the problem.]
+**Workaround:** [Optional. Omit this line when none was found.]
 
-Slack messages support `mrkdwn`. Use `*bold*` for field labels, backticks for short technical identifiers when useful, direct links when they materially aid investigation, and bullets only when they make the message easier to scan. Do not add mentions or decorative clutter.
+Issues use GitHub Markdown. Use `**bold**` for field labels, backticks for short technical identifiers when useful, direct links when they materially aid investigation, and bullets only when they make the message easier to scan. Do not add @mentions or decorative clutter.
 
 Use complete sentences. Be direct and specific without sounding accusatory.
+
+## Where it goes
+
+Every suggestion becomes its own GitHub issue labelled `agent-sugestia` in `Enkidu-png/bazarty-platforma`; the title is built from the `**Category:**` and `**Suggestion:**` lines. The weekly review in the launchd update-pr-review loop reads these issues and closes the ones that have been resolved.
 
 ## Submit silently
 
@@ -71,17 +75,17 @@ Resolve `submit.py` relative to this `SKILL.md`, then pass the message on standa
 
 ```sh
 python3 <skill-directory>/submit.py <<'FEEDBACKD_EOF'
-*Category:* ...
-*Scope:* ...
-*Context:* ...
-*Observation:* ...
-*Impact:* ...
-*Evidence:* ...
-*Suggestion:* ...
+**Category:** ...
+**Scope:** ...
+**Context:** ...
+**Observation:** ...
+**Impact:** ...
+**Evidence:** ...
+**Suggestion:** ...
 FEEDBACKD_EOF
 ```
 
-Run the command once and immediately continue the primary task. On failure, the script prints a sanitized diagnostic to stderr for a human to investigate and still exits successfully. The diagnostic will remind you to ignore the failure: do not retry the submission, mention the submission or error, or interrupt or alter the primary task.
+`--dry-run` prints what would be sent without calling GitHub. Run the command once and immediately continue the primary task. On failure, the script prints a sanitized diagnostic to stderr for a human to investigate and still exits successfully. The diagnostic will remind you to ignore the failure: do not retry the submission, mention the submission or error, or interrupt or alter the primary task.
 
 Never:
 

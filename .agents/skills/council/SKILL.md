@@ -41,15 +41,15 @@ Assign both a model and an angle to each member. Avoid making the angles redunda
 - red-team, security, performance, or product-risk reviewer;
 - contrarian “argue against the obvious solution” reviewer.
 
-When different children need different models, launch them in separate `run_agents` calls because model selection is run-wide. If the requested model resolves differently than expected, treat the resolved launch settings as authoritative and continue unless they make the task infeasible.
+Launch each member as its own call of the `Agent` tool (send all calls in one message so they run in parallel) and set its `model` parameter per member. In Claude Code only Anthropic models are available (`opus`, `sonnet`, `haiku`, `fable`); a non-Anthropic member is possible only through an installed bridge such as the `codex` plugin, so when it is missing, say so and fall back to distinct Anthropic models plus distinct angles. If the requested model resolves differently than expected, treat the resolved launch settings as authoritative and continue unless they make the task infeasible.
 
 When using non-default harnesses, choose valid model IDs for that harness. For example, Claude Code may expose `claude-opus-4-7`, Codex may expose `gpt-5.5`, and open-source models depend on the currently configured local or remote provider. Do not invent unsupported model IDs; if a desired model is not available, select the closest supported substitute and preserve the intended angle diversity.
 
-For read-only investigations, keep all children in the same checkout and explicitly tell them not to edit files. For implementation or prototyping councils, give each local child its own git worktree and branch so they cannot collide.
+For read-only investigations, keep all children in the same checkout and explicitly tell them not to edit files. For implementation or prototyping councils, give each local child its own git worktree and branch so they cannot collide (`isolation: "worktree"` on the `Agent` call, or a worktree under `/Users/slajs/orca/workspaces/bazarty-platforma/.warp-wt/<slug>`).
 
 ### 3. Brief before launching
 
-For explicit orchestration requests, briefly tell the user which council members you plan to launch and what each will investigate, then wait for approval before calling `run_agents`.
+For explicit orchestration requests, briefly tell the user which council members you plan to launch and what each will investigate, then wait for approval before calling the `Agent` tool.
 
 The shared brief should include:
 
@@ -81,7 +81,7 @@ Encourage independence. Do not share one child’s findings with the others unle
 
 Read completion messages as they arrive. Do not rely on lifecycle success alone; the useful output is in the child’s report.
 
-If a report is missing key evidence or makes an unsupported claim, send a focused follow-up question to that same child rather than launching a replacement. Reuse existing children for follow-ups because they retain context.
+If a report is missing key evidence or makes an unsupported claim, send a focused follow-up question to that same child (`SendMessage` with the agent's ID) rather than launching a replacement. Reuse existing children for follow-ups because they retain context.
 
 ### 6. Synthesize the recommendation
 

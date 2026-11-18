@@ -26,7 +26,7 @@ Prefer repository conventions when known. Otherwise:
 - Use `main`, `master`, or `develop` only when that is clearly the repository's base branch.
 - Use `git merge-base` and `git diff --name-only <base>...HEAD` to find files introduced or modified by the branch.
 
-Look for specs introduced or modified by the change, especially under `specs/`.
+Look for specs introduced or modified by the change, especially under `specs/`. In bazarty a feature spec lives in `specs/GH<n>/` (`product.md`, `tech.md`) and a long-lived area spec in `specs/<obszar>/` (`PRODUCT.md`, `TECH.md`, `DECISIONS.md`); `specs/README.md` describes both.
 
 Common spec names include:
 
@@ -37,7 +37,7 @@ Common spec names include:
 - `SECURITY.md`
 - `security.md`
 
-Treat any markdown file bundled under a relevant `specs/<issue-number>/` directory as a valid spec candidate. Examples include focused specs such as `MIGRATION.md`, `ROLLBACK.md`, `PRIVACY.md`, `API.md`, or `TESTING.md`.
+Treat any markdown file bundled under a relevant `specs/GH<n>/` or `specs/<obszar>/` directory as a valid spec candidate. A change that touches an area's behavior is validated against that area's `PRODUCT.md` and `TECH.md` too, even when they were not modified. Examples include focused specs such as `MIGRATION.md`, `ROLLBACK.md`, `PRIVACY.md`, `API.md`, or `TESTING.md`.
 
 If no specs were introduced or modified, look for existing specs referenced by the PR description, commit messages, branch name, changed files, or nearby `specs/` directories. If there is still no relevant spec, stop and report that there is no spec to validate against.
 
@@ -64,7 +64,7 @@ Do not rely only on file names or summaries. Read enough code and tests to decid
 
 ## PR review comment consistency
 
-If the branch or PR has already been through external PR review, check the review comments before finalizing the mismatch report. Fetch PR review comments when needed, using the built-in `/pr-comments` workflow or equivalent GitHub CLI/API fallback.
+If the branch or PR has already been through external PR review, check the review comments before finalizing the mismatch report. Fetch PR review comments when needed, using the GitHub CLI/API (`gh pr view <n> --comments`, `gh api repos/{owner}/{repo}/pulls/<n>/comments`).
 
 For each review thread with a response from the current user or agent:
 
@@ -75,7 +75,7 @@ For each review thread with a response from the current user or agent:
 
 Treat a material difference between the implementation and the last acknowledged resolution as a `review-comment consistency` mismatch. Include the review comment URL, the acknowledged resolution text, the relevant implementation path and line when available, and why the implementation does or does not match what was promised.
 
-Use the same `ask_user_question` flow for these inconsistencies. For review-comment consistency mismatches, the resolution choices should be:
+Use the same `AskUserQuestion` flow for these inconsistencies. For review-comment consistency mismatches, the resolution choices should be:
 
 - Change the implementation to match the last acknowledged resolution on the comment.
 - Append a follow-up comment explaining why the implementation is being left as-is.
@@ -83,7 +83,7 @@ Use the same `ask_user_question` flow for these inconsistencies. For review-comm
 - Acknowledge without changes.
 - `Other...`
 
-If the user chooses to append a follow-up comment, draft the comment for approval before posting it. Do not post GitHub comments without explicit approval. Prefix agent-authored follow-up comments with `[Warp Agent]`.
+If the user chooses to append a follow-up comment, draft the comment for approval before posting it. Do not post GitHub comments without explicit approval. Prefix agent-authored follow-up comments with `[agent]`.
 
 ## Security spec validation
 
@@ -113,19 +113,19 @@ Do not make speculative security claims. If evidence is incomplete, label the it
 
 ## Product behavior validation
 
-When the specs include product behavior, UX flows, screenshots, acceptance criteria, or user-visible success criteria, ask whether the user wants an additional cloud computer-use validation pass before finalizing the mismatch report.
+When the specs include product behavior, UX flows, screenshots, acceptance criteria, or user-visible success criteria, ask whether the user wants an additional browser validation pass on the running app before finalizing the mismatch report.
 
-If the specs reference Figma mocks, design links, screenshots, or visual acceptance criteria, validate the product against those visual sources. Use the Figma MCP server for Figma files when available, and use available computer-vision or image-reading tools for screenshots and rendered UI captures. Use both when useful: Figma MCP for structured design details such as nodes, text, spacing, states, and tokens; computer vision for comparing screenshots or live UI output against the expected visual result.
+If the specs reference Figma mocks (in bazarty the product spec's `Figma` section usually links an HTML mock artifact or a screenshot in the repo), design links, screenshots, or visual acceptance criteria, validate the product against those visual sources. Use the Figma MCP server for Figma files when available, and use available computer-vision or image-reading tools for screenshots and rendered UI captures. Use both when useful: Figma MCP for structured design details such as nodes, text, spacing, states, and tokens; computer vision for comparing screenshots or live UI output against the expected visual result.
 
 Treat material visual differences as product mismatches, including missing UI states, incorrect copy, layout differences that affect usability, wrong component hierarchy, missing affordances, visual regressions, or behavior that contradicts the mock. Do not over-report tiny pixel differences unless the spec calls for exact visual fidelity or the difference affects the user experience.
 
-Call `ask_user_question` with options like:
+Call `AskUserQuestion` with options like:
 
-- `Launch cloud computer-use agents to validate product behavior`
-- `Skip cloud computer-use validation`
+- `Launch browser validation agents to validate product behavior`
+- `Skip browser validation`
 - `Other...`
 
-If the user chooses cloud validation, launch multiple Oz cloud agents with computer use enabled as part of this validation flow. Split the product spec's user-visible behaviors into independent validation assignments, such as one child agent per major flow, user role, platform, or acceptance-criteria group. Each child agent should receive:
+`run_agents` and Oz cloud agents are not available in this repo. If the user chooses browser validation, launch sub-agents with the `Agent` tool (one git worktree per agent, coordinated through the `orkiestrator-warp` plugin when it runs the work), each driving the locally running app with Playwright or the Chrome browser tool. The app must run against the DEV database (startup banner `srodowisko=DEV`), with the test accounts from `.env.example`; never against production. Split the product spec's user-visible behaviors into independent validation assignments, such as one child agent per major flow, user role (creator, buyer, admin), viewport (desktop, phone), or acceptance-criteria group. Each child agent should receive:
 
 - the repository and branch or PR to validate
 - the relevant spec excerpts and product behavior under test
@@ -133,9 +133,9 @@ If the user chooses cloud validation, launch multiple Oz cloud agents with compu
 - setup instructions, credentials, feature flags, or environment notes that are safe to share
 - the expected evidence format: pass/fail, reproduction steps, screenshots or recordings when useful, observed behavior, and exact mismatches
 
-Use cloud validation results as additional evidence when building the mismatch list. Treat confirmed behavior gaps as product mismatches. If a cloud agent cannot validate a behavior because setup is unavailable, record that validation gap instead of assuming the behavior passes.
+Use browser validation results as additional evidence when building the mismatch list. Treat confirmed behavior gaps as product mismatches. If a validation agent cannot validate a behavior because setup is unavailable, record that validation gap instead of assuming the behavior passes.
 
-If the user skips cloud validation, continue with local/static validation and mention that no cloud computer-use product validation was run.
+If the user skips browser validation, continue with static validation and mention that no browser product validation was run.
 
 ## Validation criteria
 
@@ -174,13 +174,13 @@ If no mismatches are found, say that the implementation appears to match the dis
 
 ## Initial resolution mode
 
-When mismatches exist, the first `ask_user_question` call must ask how the user wants to resolve them:
+When mismatches exist, the first `AskUserQuestion` call must ask how the user wants to resolve them:
 
 - `Resolve one-by-one`
 - `Collect all decisions, then apply in a batch`
 - `Other...`
 
-Every `ask_user_question` call in this skill must include an `Other...` option for custom instructions.
+Every `AskUserQuestion` call in this skill must include an `Other...` option for custom instructions.
 
 ### One-by-one mode
 
@@ -200,7 +200,7 @@ After all mismatch decisions are collected, apply all selected code and spec cha
 
 ## Per-mismatch questions
 
-For each mismatch, call `ask_user_question` with options tailored to the specific difference. Always include options with these meanings:
+For each mismatch, call `AskUserQuestion` with options tailored to the specific difference. Always include options with these meanings:
 
 - Update the implementation to match the spec.
 - Update the spec to match the implementation.
@@ -232,7 +232,7 @@ After applying selected resolutions:
 
 1. Review `git diff` to confirm the changes match the user's decisions.
 2. Run relevant validation based on changed files and repository conventions.
-3. If the repository has documented test, lint, typecheck, or presubmit commands, prefer those.
+3. If the repository has documented test, lint, typecheck, or presubmit commands, prefer those. In bazarty: targeted checks first (`npm run typecheck`, the relevant `npm run check:*`, `npm run test:jednostkowe`, `npm run test:deno` for edge functions, the Playwright specs in `tests/e2e/<obszar>/` touched by the change); the full gate `npm run bramka` runs in CI, so run it locally only when the task requires it.
 4. If validation is too expensive or cannot run, explain why and list what remains unverified.
 5. Re-check the resolved mismatches against the final diff.
 
@@ -240,7 +240,7 @@ After applying selected resolutions:
 
 After validation, ask whether the user wants to commit and optionally push the changes to `origin`.
 
-Call `ask_user_question` with options like:
+Call `AskUserQuestion` with options like:
 
 - `Commit only`
 - `Commit and push to origin`
@@ -253,7 +253,7 @@ If the user chooses to commit:
 2. Ask for or propose a concise commit message if one is not already clear.
 3. Stage only the intended files.
 4. Commit non-interactively.
-5. Include `Co-Authored-By: Warp Agent <agent@warp.dev>` in the commit message (never in a PR description), and do not add it again if the commit already has one.
+5. End the commit message with the attribution trailers the session provides (never in a PR description), and do not add them again if the commit already has them.
 
 If the user chooses to push, push the current branch to `origin` after the commit succeeds. If commit or push fails, report the failure and do not retry destructively.
 

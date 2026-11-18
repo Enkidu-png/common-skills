@@ -53,26 +53,27 @@ GH_PAGER=cat gh run view <run-id> --log-failed
 Focus on extracting:
 - Error messages and their locations (file paths, line numbers)
 - Compilation errors (unused imports, type mismatches, etc.)
-- Linting/clippy errors with specific lint names
+- Lint and guard errors with the rule or guard name
 - Test failure messages and stack traces
 - Build failures and their root causes
 
 ### 4. Categorize errors
 
 Group errors by type:
-- **Formatting issues**: `cargo fmt` failures
-- **Linting issues**: `cargo clippy` warnings/errors
-- **Compilation errors**: Type errors, missing imports, signature mismatches
-- **Test failures**: Failing tests with their names and failure reasons
-- **Platform-specific issues**: WASM, Linux, macOS, Windows-specific failures
+- **Guard failures**: `npm run check:*` (typography, tokens, scope, secrets, migrations, context) with the guard name and the offending file:line
+- **Linting issues**: `npm run check:hooki` (ESLint hooks rules) findings
+- **Type and build errors**: `tsc` errors, `vite build` failures, missing imports, signature mismatches
+- **Test failures**: Failing unit, Deno or Playwright tests with their names and failure reasons
+- **Gate verdict NOT CHECKED (exit 2)**: a check could not run (missing stack, missing env); this is not a code error and must be reported as unchecked
+- **Runner issues**: self-hosted `mac-mini` runner offline, job skipped, or timeout
 
 ### 5. Generate fix plan
 
-Create a plan document (using `create_plan` tool) with:
+Create a plan document (in plan mode, or as a written plan in your reply) with:
 - **Problem Statement**: Summary of failing checks
 - **Current State**: What errors were found and where
 - **Proposed Changes**: Specific fixes needed for each error category
-- **Validation Steps**: Commands to verify fixes (fmt, clippy, tests, presubmit)
+- **Validation Steps**: The narrowest commands that verify each fix (one `check:*`, `npm run typecheck`, one test file); the full gate runs again in CI after push
 
 The plan should reference the `fix-errors` skill for detailed guidance on resolving specific error types.
 
@@ -82,18 +83,17 @@ The plan should reference the `fix-errors` skill for detailed guidance on resolv
 - **Always create a plan first**: Never make code changes directly. Generate a plan for user review
 - **Check test status in CI**: Even if tests fail locally, verify they passed in CI before flagging as issues
 - **Unrelated test failures**: If tests passed in CI but fail locally, they may be environment-specific or flaky
-- **Multiple error types**: Fix one category at a time (e.g., all clippy errors before tests)
+- **Multiple error types**: Fix one category at a time (e.g., all type errors before tests)
+- **The gate stops at the first failure**: `npm run bramka` exits on the first non-zero command, so later commands in the list were not checked; say so in the plan
 - **Cross-reference fix-errors skill**: For detailed error resolution strategies, use the `fix-errors` skill
 
 ## Common CI Check Names
 
-- `Formatting + Clippy (MacOS)`
-- `Formatting + Clippy (Linux)`
-- `Run MacOS tests`
-- `Run Linux tests`
-- `Run Windows tests`
-- `Check CI results` (summary check)
-- `WASM build`
+Workflow `warp-ci` (`.github/workflows/warp-ci.yml`, self-hosted runner `mac-mini`):
+- `zakres` - decides what changed; a docs-only change skips the gate (`kod=false`), which is a skip, not a pass
+- `ci` - runs `npm run bramka` (the full gate); the failing step log names the first red command
+
+Check the latest run for a branch with `gh run list --branch <branch> --workflow warp-ci.yml --limit 1`.
 
 ## Example Commands
 

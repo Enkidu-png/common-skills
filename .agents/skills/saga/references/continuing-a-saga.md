@@ -4,7 +4,7 @@ Use this when asked to continue, resume, or pick up a saga — typically a fresh
 
 ## 1. Locate the saga directory
 
-Find the saga under `~/.sagas/`. If the user named it or gave a path, use that. Otherwise `ls ~/.sagas/` and, if ambiguous, ask the user which one (via `ask_user_question` listing the candidates). The directory name is the saga's stable identity.
+Find the saga under `~/.sagas/`. If the user named it or gave a path, use that. Otherwise `ls ~/.sagas/` and, if ambiguous, ask the user which one (via `AskUserQuestion` listing the candidates). The directory name is the saga's stable identity.
 
 ## 2. Rebuild orientation cheaply
 
@@ -21,7 +21,7 @@ Do **not** bulk-read every `MILESTONE.md` and task spec. Open only the spec(s) f
 
 - Check git: do the branches/worktrees referenced for `done`/`in progress` tasks exist? Were they merged? All saga branches follow the convention `saga/<saga-name>/m<M>t<T>-<task-slug>` (possibly behind a team/user branch prefix), so you can enumerate them with `git branch --list '*saga/<saga-name>/*'` even without reading `PROGRESS.md`.
 - For tasks marked `done`, spot-check the evidence still holds — re-run the task's validation if there's any doubt that it landed. A task is only really done when its criteria pass against the current integrated code.
-- For tasks marked `in progress`, use the recorded `worker_run_id` to decide whether the prior worker is still reachable. Do not rely on a display name alone; if there is no addressable run ID, or the agent is no longer reachable, treat the task as not started and re-delegate from its spec.
+- For tasks marked `in progress`, use the recorded `worker_run_id` (the agent ID from the `Agent` tool) to decide whether the prior worker is still reachable (`SendMessage` to it). Do not rely on a display name alone; if there is no addressable agent ID, or the agent is no longer reachable, treat the task as not started and re-delegate from its spec.
 
 Update `PROGRESS.md` to match reality before proceeding, noting the reconciliation in the log.
 
@@ -31,7 +31,7 @@ From the reconciled state:
 
 - If milestones remain, resume the **Phase 2 orchestration loop** at the current milestone: launch the next batch of pending/blocked tasks (workers in isolated worktrees), collect reports, integrate, run milestone-level validation, and advance. Follow `SKILL.md` Phase 2.
 - If all milestones are integrated and validated, move to **Phase 3 final validation**: check the saga exit criteria and loop the user in for manual acceptance.
-- If a blocker or open question recorded in `PROGRESS.md` needs the user, resolve it first via `ask_user_question` with options.
+- If a blocker or open question recorded in `PROGRESS.md` needs the user, resolve it first via `AskUserQuestion` with options.
 
 ## 5. Keep the contract intact
 

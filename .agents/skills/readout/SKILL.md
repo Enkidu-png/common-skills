@@ -37,12 +37,15 @@ Write a short brief (roughly 10–20 lines) carrying **pointers, not payloads**:
 
 ### 3. Launch one local child agent
 
-Spawn exactly one child agent via `run_agents`, **local** execution. Local matters: the document lands on the user's filesystem and opens in their browser. Name the child `readout-<topic-slug>`.
+Spawn exactly one child agent with the `Agent` tool, in the background (`run_in_background: true`). It runs locally, which matters: the document lands on the user's filesystem and opens in their browser. Give it the description `readout-<topic-slug>`.
+
+- **Snapshot mode:** use `subagent_type: "fork"`. A fork inherits the full parent conversation, so it mines the findings directly; no run ID or history search is needed.
+- **Research mode:** use a fresh agent (`general-purpose`), because there is no conversation to inherit.
 
 Build the child's prompt from the template below. It must include:
 
 - The brief
-- The source-material block matching the mode (snapshot mode also needs your agent run ID — `current_run_id` from the orchestration runtime context — so the child can mine the parent conversation with `search_conversation_history`)
+- The source-material block matching the mode (in snapshot mode the fork already holds the parent conversation, so point it at the threads to cover instead of pasting them)
 - The instruction to read `references/doc-guide.md` from this skill's directory before writing
 - The output path convention and completion protocol
 
@@ -62,9 +65,9 @@ Brief:
 <brief — including the questions to answer, depth, and audience>
 
 Source material (snapshot mode):
-- The parent conversation: agent run ID <current_run_id>. Use search_conversation_history
-  with agent_run_id set to that ID. Make several targeted queries — one per question in
-  the brief — rather than one broad query; targeted queries surface far more usable detail.
+- The parent conversation, which you inherited as a fork. Go through it once per question
+  in the brief rather than skimming it as a whole; a targeted pass per question surfaces
+  far more usable detail.
 - The codebase(s) at <absolute paths>. The conversation is your starting point, not a cage:
   verify file references before asserting them, and where a section needs more depth to
   stand on its own, go read the code and fill the gap.
@@ -99,5 +102,5 @@ Output:
 ## Fallbacks
 
 - **Child spawning unavailable or denied**: produce the document yourself, following `references/doc-guide.md`. If a research subagent is available, delegate the conversation-mining or code investigation to it so your context still stays lean.
-- **Child can't search conversation history** (snapshot mode; it will report this back): reply to the child with a distilled dump of the findings so it can proceed — this is the one case where payload-in-prompt is the right call.
+- **Child has no access to the conversation** (snapshot mode launched as a fresh agent instead of a fork; it will report this back): reply to the child (`SendMessage`) with a distilled dump of the findings so it can proceed - this is the one case where payload-in-prompt is the right call.
 - **User-provided material instead of a conversation** (transcripts, files, links): treat that material as the source; everything else in the workflow is unchanged.

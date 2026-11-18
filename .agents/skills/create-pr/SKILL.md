@@ -1,30 +1,30 @@
 ---
 name: create-pr
-description: Create a pull request in the warp repository for the current branch. Use when the user mentions opening a PR, creating a pull request, submitting changes for review, or preparing code for merge.
+description: Create a pull request in the bazarty repository for the current branch. Use when the user mentions opening a PR, creating a pull request, submitting changes for review, or preparing code for merge.
 ---
 
 # create-pr
 
 ## Overview
 
-This guide covers best practices for creating pull requests in the warp repository, including merging master, validating changes efficiently, linking Linear tasks, ensuring appropriate test coverage, and structuring your PR for effective review.
+This guide covers best practices for creating pull requests in the bazarty repository, including merging the base branch, validating changes efficiently, linking GitHub issues, ensuring appropriate test coverage, and structuring your PR for effective review.
 
 ## Related Skills
 
 - `write-pr-description` - Write the PR body itself: template sections, prose, and reviewer guidance
-- `fix-errors` - Fix targeted compilation, test, lint, or formatting failures before opening a PR
-- `warp-integration-test` - Add or update integration coverage for user-visible flows, regressions, and P0 use cases
-- `add-feature-flag` - Gate changes behind feature flags
+- `fix-errors` - Fix targeted type, build, guard, test, lint, or formatting failures before opening a PR
+- `testy-e2e` - Add or update Playwright coverage for user-visible flows, regressions, and P0 use cases
+- `testy-jednostkowe` - Add unit tests for non-trivial logic
 
 ## Pre-PR Checklist
 
-### 1. Merge master into your feature branch
+### 1. Merge the base branch into your feature branch
 
-**Always merge master into your feature branch before starting the review process.**
+**Always merge the base branch into your feature branch before starting the review process.** The base branch is `main`, except for work on the agent-system transition, which targets `warp/przejscie`. Never push to `main` and never merge into it: that is the owner's decision (merge to `main` deploys production).
 
 ```bash
 git fetch origin
-git merge origin/master
+git merge origin/<base-branch>
 ```
 
 Resolve any merge conflicts locally before opening the PR.
@@ -49,38 +49,41 @@ This helps you:
 - Catch unintended changes before review
 - Write an accurate PR description
 - Ensure you're comparing against the correct base branch
-- **Tests:** Include tests when required—bug fixes (regression test), algorithmic code (unit tests), UI components (layout test), P0 use cases (integration test). See Testing Requirements below.
+- **Tests:** Include tests when required - bug fixes (regression test), algorithmic code (unit tests), UI changes (visual proof), P0 use cases (Playwright e2e test). See Testing Requirements below.
 
 ### 3. Respect implementation agent validation
 
 PR creation is not a validation boundary. If the implementation workflow already completed its tests, lint checks, and final formatting pass and the candidate has not changed, do not rerun them.
 
-If merging master or preparing the PR changed source, tests, manifests, generated code, or configuration, validate the new candidate in this order:
+If merging the base branch or preparing the PR changed source, tests, manifests, generated code, or configuration, validate the new candidate in this order:
 
 1. Run the relevant tests and fix the code until they pass.
-2. Run the applicable Clippy and other lint, typecheck, or build checks and fix their findings. Return to affected tests only when a fix materially changes behavior.
-3. Run `./script/format` once after all other code changes are complete.
+2. Run `npm run typecheck` and the `npm run check:*` guards related to the change, and fix their findings. Return to affected tests only when a fix materially changes behavior.
+3. Run the formatter (`npx prettier --write <changed files>`) once after all other code changes are complete.
 
-Do not rerun tests or lint after formatting, and do not run `./script/presubmit`, unless the user, task, or approved spec explicitly requires it. CI owns uncommon failures outside targeted local coverage. Documentation-only changes do not require Rust tests, Clippy, or formatting.
+Do not rerun tests or checks after formatting, and do not run the full gate (`npm run bramka`), unless the user, task, or approved spec explicitly requires it. CI (`.github/workflows/warp-ci.yml`) runs the full gate and owns uncommon failures outside targeted local coverage. Documentation-only changes do not require tests or formatting; run only the guards that read documents (`npm run check:kontekst`, `npm run check:typo`).
 
-### 4. Link to Linear task
+### 4. Link to the GitHub issue
 
-When possible, PRs should be associated with a Linear task. Use the Linear MCP tool (if available) to find corresponding issues.
+PRs should be associated with a GitHub issue in `Enkidu-png/bazarty-platforma` (the single task tracker). Find it with `gh issue list --search "<keywords>"`.
 
 **Branch naming convention:**
-Remote branches should be prefixed with your name (e.g., `zheng/feature`, `alice/fix-bug`).
+Use a short descriptive branch name with a type prefix (e.g., `fix/koszyk-suma`, `feat/oferta-ceny`); agent-system transition work uses `warp/<slug>`.
 
-**How to link PRs to Linear:**
-Include the issue ID in the PR title (e.g., `[WARP-1234] Add new feature`). Do this **before** creating the PR for automatic linking.
+**How to link PRs to issues:**
+Put the issue number in the PR title (e.g., `Poprawka sumy koszyka (#1234)`) and a closing keyword in the body (`Fixes #1234`) so the issue closes on merge.
+
+**Scope trailer:**
+The first commit of the task carries `Scope-Files: <glob>[, <glob>...]` in its message body. Without it the diff-scope guard (`npm run check:zakres`) checks nothing.
 
 ### 5. Open the PR
 
-Use the PR template at `.github/pull_request_template.md` when opening PRs.
+Use the PR template at `.github/pull_request_template.md` when opening PRs. Write the PR title and body in Polish (the owner reads them).
 
-Add changelog entries when appropriate using the format at the bottom of the PR template. Some examples:
-- Feature: "Global search in files across your current directories. Use CMD-F/CTRL-SHIFT-F to open."
-- Improvement: "Added horizontal autoscrolling when jumping to line/column."
-- Bug fix: "Fixed session viewer input being cleared when agent runs commands.
+Add changelog entries when appropriate using the format at the bottom of the PR template (the `changelog` skill reads them at release time). Some examples:
+- Feature: "Negocjacja ceny w czacie: kupujący proponuje cenę, twórca akceptuje albo odrzuca."
+- Improvement: "Szybsze ładowanie feedu na telefonie."
+- Bug fix: "Naprawiona suma w koszyku przy dwóch pracach od jednego twórcy." 
 
 **CLI workflow:**
 
@@ -93,7 +96,7 @@ Add changelog entries when appropriate using the format at the bottom of the PR 
 - **Create a new PR:**
   ```bash
   # With title and body
-  gh pr create --title "Title" --body "Description" --draft
+  gh pr create --base <base-branch> --title "Title" --body "Description" --draft
 
   # Auto-fill from commits
   gh pr create --fill --draft
@@ -116,11 +119,7 @@ Add changelog entries when appropriate using the format at the bottom of the PR 
 
 ### 6. Include co-author attribution
 
-When committing changes, include attribution as a trailer at the end of the commit message only — never in the PR description — and never add a second Warp/Oz co-author trailer if the commit already has one:
-
-```
-Co-Authored-By: Warp Agent <agent@warp.dev>
-```
+When committing changes, include the agent attribution trailers your session provides at the end of the commit message, and never add a second co-author trailer if the commit already has one. Commits and pushes go out only as the `Enkidu-png` GitHub account (`npm run check:autorzy` enforces it).
 
 ## Testing Requirements
 
@@ -138,51 +137,31 @@ The test should:
 Code with non-trivial logic should have unit tests to validate functionality:
 
 **Examples of what needs unit tests:**
-- Custom data structures (e.g., `SumTree`)
-- Search-related APIs that should return expected results for a given query
-- Core layout code in the UI framework
+- Money math (prices, fees, offers, payouts) and shipping quotes
+- Search, filtering, and facet logic that should return expected results for a given query
+- Parsers, formatters, and mappers between database rows and UI types
 - Any algorithmic or computational logic
 
 **Not required for:**
 - Sufficiently-simple functions
 - Trivial getters/setters
 
-Follow the repository's local testing conventions for guidance on writing unit tests.
+Follow the `testy-jednostkowe` skill for guidance on writing unit tests.
 
-### UI components need layout validation tests
+### UI changes need visual proof
 
-**All UI components (implementations of `View`) should have a simple unit test** to validate that they can be laid out without a panic.
-
-This provides high-level coverage over rendering "safety" (though not "correctness"):
-
-```rust
-#[test]
-fn test_component_can_layout() {
-    use warpui::App;
-    use warp::test_util::{terminal::initialize_app_for_terminal_view, add_window_with_terminal};
-    
-    App::test((), |mut app| async move {
-        initialize_app_for_terminal_view(&mut app);
-        let term = add_window_with_terminal(&mut app, None);
-        
-        // Render the component - should not panic
-        term.update(&mut app, |view, ctx| {
-            // Create and layout your component
-        });
-    })
-}
-```
+**Every user-visible change is verified on the running app**, not in code. Attach a screenshot (saved under `screenshots/`, which is gitignored) or a short video to the PR, and list anything you did not check together with the command that would check it. Follow the `ui-guidelines` skill for what to look at.
 
 ### Ask before skipping integration coverage
 
-If the PR changes a user-visible flow, fixes an end-to-end regression, or otherwise looks like it would benefit from integration coverage, use the `ask_user_question` tool before creating or updating the PR to ask whether the user wants an integration test added as part of the work.
+If the PR changes a user-visible flow, fixes an end-to-end regression, or otherwise looks like it would benefit from integration coverage, use the `AskUserQuestion` tool before creating or updating the PR to ask whether the user wants an integration test added as part of the work.
 
 Prefer a direct choice such as:
 
 - `Yes, add an integration test before creating the PR`
 - `No, continue without an integration test`
 
-If the user chooses to add one, use the `warp-integration-test` skill.
+If the user chooses to add one, use the `testy-e2e` skill.
 
 ### P0 use cases require integration tests
 
@@ -193,9 +172,9 @@ If the user chooses to add one, use the `warp-integration-test` skill.
 Integration tests should:
 - Exercise the full user-facing flow
 - Validate end-to-end functionality
-- Be placed in the `integration/` directory
+- Be placed in the matching `tests/e2e/<obszar>/` directory
 
-Use the `warp-integration-test` skill for implementation details, test registration steps, and validation workflow.
+Use the `testy-e2e` skill for implementation details, directory choice, and validation workflow.
 
 ## PR Description Guidelines
 
@@ -207,8 +186,8 @@ areas for the reviewer.
 
 1. **Monitor CI checks** - Ensure all automated checks pass
 2. **Respond to review comments** - Address feedback promptly
-3. **Keep the PR up to date** - Merge master if conflicts arise
-4. **Validate changed candidates** - After code changes from review feedback, run affected tests, then lint checks, then `./script/format` once. Do not repeat validation for PR metadata or an unchanged candidate.
+3. **Keep the PR up to date** - Merge the base branch if conflicts arise (see `resolve-merge-conflicts`)
+4. **Validate changed candidates** - After code changes from review feedback, run affected tests, then the related checks, then the formatter once. Do not repeat validation for PR metadata or an unchanged candidate.
 
 ## Best Practices
 
@@ -217,4 +196,4 @@ areas for the reviewer.
 - **Self-review first** - Review your own diff before requesting review
 - **Update tests** - Ensure test coverage reflects your changes
 - **Document breaking changes** - Call out any API changes or breaking modifications
-- **Use feature flags** - Gate risky changes behind feature flags when appropriate (see the `add-feature-flag` skill)
+- **Use existing switches** - Gate risky changes behind an existing configuration switch (for example `sprzedaz_wlaczona`) when appropriate
