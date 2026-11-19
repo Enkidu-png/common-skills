@@ -50,7 +50,7 @@ Agent(description: "repro-primary", prompt: <shared child prompt> + <primary rep
 Agent(description: "repro-variant", prompt: <shared child prompt> + <variant prompt>, isolation: "worktree")
 ```
 
-Omit extra children when they would duplicate the same steps. Omit `model` unless the user requested a specific model. For a long multi-child investigation, track children through the `orkiestrator-warp` plugin.
+Omit extra children when they would duplicate the same steps. Omit `model` unless the user requested a specific model. For a long multi-child investigation, track children through the `boss` plugin.
 
 ## Shared child prompt
 
