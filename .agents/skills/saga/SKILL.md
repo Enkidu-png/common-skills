@@ -19,7 +19,7 @@ The whole method rests on one bet: if the spec defines every task with validatio
 
 ## The saga directory
 
-Each saga lives in its own directory **outside the repo**, under `~/.sagas/`, so it survives across orchestrator sessions and can be resumed by a fresh agent. Name it uniquely from a slug of the feature plus a timestamp, e.g. `~/.sagas/dark-mode-20260609-0028/`. Confirm the exact path with the user and record it - it is the saga's stable identity. When this session also holds the `orkiestrator-warp:orkiestrator` role, write the saga path into the plugin's state file as well, so a resume after compaction finds the saga; before compaction, save a handoff with `orkiestrator-warp:handoff`.
+Each saga lives in its own directory **outside the repo**, under `~/.sagas/`, so it survives across orchestrator sessions and can be resumed by a fresh agent. Name it uniquely from a slug of the feature plus a timestamp, e.g. `~/.sagas/dark-mode-20260609-0028/`. Confirm the exact path with the user and record it - it is the saga's stable identity. When this session also holds the `boss:orkiestrator` role, write the saga path into the plugin's state file as well, so a resume after compaction finds the saga; before compaction, save a handoff with `boss:handoff`.
 
 The directory holds a *tree* of spec files plus a progress log. Each level carries its own validation criteria, so detail scales with the size of the saga instead of bloating one file:
 
@@ -109,7 +109,7 @@ Goal: execute every task to its validation criteria, milestone by milestone, del
 
 ### The per-task contract given to each worker
 
-Open every worker prompt with the same shared block (repo path, base branch, toolchain commands such as the repo's `npm run check:*` and `npm run bramka`, coding standards from `AGENTS.md`, the validation method, how to report back) and follow it with the specific task. Instruct every worker to:
+Open every worker prompt with the same shared block (repo path, base branch, toolchain commands such as the repo's targeted `npm run check:*` (the full `npm run bramka` runs in CI, not locally), coding standards from `AGENTS.md`, the validation method, how to report back) and follow it with the specific task. Instruct every worker to:
 
 1. Implement only its assigned task and owned files.
 2. **Self-validate in a loop** against the task's validation criteria using the prescribed method (computer use / interactive CLI subagent / unit + integration tests). Iterate fix→validate until all criteria pass or it is genuinely blocked.
