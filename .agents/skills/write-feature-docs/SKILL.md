@@ -29,7 +29,7 @@ Steps 3 and 4 are **two separate confirmations, in that order.** The outline is 
 
 Ask the owner for the issue number or area if they haven't provided it. Specs live in one of two places (see `specs/README.md`):
 - a feature tied to a GitHub issue: `specs/GH<n>/product.md` and `specs/GH<n>/tech.md`
-- a large area: `specs/<obszar>/PRODUCT.md`, `TECH.md`, `DECISIONS.md`
+- a large area: `specs/<obszar>/PRODUCT.md`, `TECH.md`
 
 `product.md` / `PRODUCT.md` is the primary source: user-facing behavior, what and why. `tech.md` / `TECH.md` is the secondary source: implementation, data model. Read both if both exist. The product spec is the primary driver for the docs content.
 

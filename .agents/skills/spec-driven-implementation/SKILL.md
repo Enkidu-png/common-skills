@@ -21,7 +21,7 @@ where `<n>` is the GitHub issue number in `Enkidu-png/bazarty-platforma`. For ex
 - `specs/GH1234/product.md`
 - `specs/GH1234/tech.md`
 
-Keep this exact spelling (`GH` uppercase, file names lowercase): `review-pr` finds spec context only by the pattern `specs/GH<n>/(product|tech).md`. Large, long-lived areas (payments, shipping, chat, catalog, ...) keep their specs in `specs/<obszar>/PRODUCT.md`, `tech.md` and `DECISIONS.md` instead.
+Keep this exact spelling (`GH` uppercase, file names lowercase): `review-pr` finds spec context only by the pattern `specs/GH<n>/(product|tech).md`. Large, long-lived areas (payments, shipping, chat, catalog, ...) keep their specs in `specs/<obszar>/PRODUCT.md` and `TECH.md` instead (`DECISIONS.md` stays optional, see below).
 
 `specs/` should contain only `GH<n>` or area-named directories as direct children. Do not create engineer-named subdirectories or feature-slug directories there.
 

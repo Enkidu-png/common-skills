@@ -14,7 +14,7 @@ The tech spec should translate product intent into an implementation plan that f
 Write specs to one of two places (the repo's `specs/README.md` is the source of truth for both templates):
 
 - a new feature tied to a GitHub issue: `specs/GH<n>/tech.md` (e.g. `specs/GH1234/tech.md`), next to `specs/GH<n>/product.md`
-- a large, long-lived area (payments, shipping, chat, catalog, profile, ...): `specs/<obszar>/TECH.md`, with area decisions logged in `specs/<obszar>/DECISIONS.md`
+- a large, long-lived area (payments, shipping, chat, catalog, profile, ...): `specs/<obszar>/TECH.md`, with decisions in the Decisions section of its TECH.md
 
 Match the directory used by the sibling `product.md` / `PRODUCT.md` when one exists. `specs/` should contain only `GH<n>` or area-named directories as direct children.
 
@@ -83,7 +83,7 @@ If Context and Proposed changes end up describing the same files and state from 
 
 Approved specs may ship in the same PR as the implementation. Update `TECH.md` in the same PR when module boundaries, implementation sequencing, risks, validation strategy, or rollout assumptions change. The checked-in spec should describe the implementation that actually ships.
 
-For area specs (`specs/<obszar>/`), log concrete decisions in `DECISIONS.md` (newest first: date, issue, Decision, Why, Rejected alternatives). For `specs/GH<n>/`, decisions stay in `tech.md` under Proposed changes.
+For large features, the implementer may optionally keep a `DECISIONS.md` file summarizing concrete decisions. Offer it when it would help future agents; otherwise skip it. By default decisions stay in `tech.md` (Proposed changes for `specs/GH<n>/`, the Decisions section for `specs/<obszar>/`).
 
 ## Related Skills
 
