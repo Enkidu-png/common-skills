@@ -26,7 +26,7 @@ Prefer repository conventions when known. Otherwise:
 - Use `main`, `master`, or `develop` only when that is clearly the repository's base branch.
 - Use `git merge-base` and `git diff --name-only <base>...HEAD` to find files introduced or modified by the branch.
 
-Look for specs introduced or modified by the change, especially under `specs/`. In bazarty a feature spec lives in `specs/GH<n>/` (`product.md`, `tech.md`) and a long-lived area spec in `specs/<obszar>/` (`PRODUCT.md`, `TECH.md`, `DECISIONS.md`); `specs/README.md` describes both.
+Look for specs introduced or modified by the change, especially under `specs/`. In bazarty a feature spec lives in `specs/GH<n>/` (`product.md`, `tech.md`) and a long-lived area spec in `specs/<obszar>/` (`PRODUCT.md`, `TECH.md`); `specs/README.md` describes both.
 
 Common spec names include:
 
